@@ -12,13 +12,13 @@ Marks potentially malicious message with special header, which helps you archive
 Uses metrics to decide whether a message is malicious.
 
 Using third party libraries:
-https://github.com/pdonald/aho-corasick
-https://github.com/braktech/xdpdf
-https://github.com/squid-box/SevenZipSharp
-https://github.com/microsoft/libyara.NET
-https://logging.apache.org/log4net/
-https://github.com/gdziadkiewicz/log4net.Ext.Json
-https://github.com/lduchosal/ipnetwork
+* https://github.com/pdonald/aho-corasick
+* https://github.com/braktech/xdpdf
+* https://github.com/squid-box/SevenZipSharp
+* https://github.com/microsoft/libyara.NET
+* https://logging.apache.org/log4net/
+* https://github.com/gdziadkiewicz/log4net.Ext.Json
+* https://github.com/lduchosal/ipnetwork
 
 ## Configuration
 Config.cs - Class contains necessary configurations, without which agents work is impossible.
