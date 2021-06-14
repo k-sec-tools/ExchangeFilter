@@ -1,0 +1,54 @@
+Return-Path: sample1@rambler.ru
+X-Real-To: sample@sampledomaincin.com
+Received: from [10.5.5.12] (HELO mx2.mail.rambler.ru)
+  by mail161.rambler.ru (rmaild SMTP 1.2.41)
+  with ESMTP id 366270569 for sample@rambler.ru; Mon, 10 Apr 2017 10:44:59 +0300
+Received: from huan4.mail.rambler.ru (huan4.mail.rambler.ru [81.19.78.110])
+	by mx2.mail.rambler.ru (Postfix) with ESMTP id 2BE79540354
+	for <sample@rambler.ru>; Mon, 10 Apr 2017 10:44:59 +0300 (MSK)
+Received: from huan4.mail.rambler.ru (huan4.mail.rambler.ru [81.19.78.110])
+	by resmtp2.mail.rambler.ru (resmtp/Rambler) with ESMTP id ix8qtfAK;
+	Mon, 10 Apr 2017 10:44:59 +0300
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=rambler.ru; s=mail;
+	h=Content-Type:MIME-Version:Date:Message-ID:Subject:From:To; bh=nnwKHnqGPYanwB+BWKqImt7Jpyhmum5w1kY+5TARCvk=;
+	b=NnYVrptFvbx4e0bh21MncRtaRk8dbNr0wWyptZgwmEgJEWyBF7UTMyAYd6BBXtxUH5ACaZwxgzTdvr4U4TtmRSb/8xL0pNmLpjjm73M3hJWC++0agz04E9OPB9n9+Saq/2sNO63gAmD/yxhBEbQe7wgmmBL8EKUSOU27LyBBM5U=;
+Received: from [UNAVAILABLE] ([46.17.202.13]:54231 helo=[10.34.1.31])
+	by huan4.mail.rambler.ru with esmtpa (Exim 4.76)
+	(envelope-from <sample@rambler.ru>)
+	id 1cxU0Q-0004Co-ND
+	for sample@rambler.ru; Mon, 10 Apr 2017 10:44:59 +0300
+To: sample@sampledomaincin.com
+From: sample1@rambler.ru>
+Subject: =?UTF-8?B?0YLQtdGB0YI=?=
+Message-ID: <da2f0948-8472-c2ae-5f04-88005553535@rambler.ru>
+Date: Mon, 10 Apr 2017 12:44:57 +0500
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101
+ Thunderbird/45.8.0
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="------------CCD5D971BF7197648FFBEC4B"
+X-Rambler-User: sample1@rambler.ru/46.17.202.13
+
+This is a multi-part message in MIME format.
+--------------CCD5D971BF7197648FFBEC4B
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+
+супер ссылка <http://vasyhacker.ru/hack.dot>
+
+
+--------------CCD5D971BF7197648FFBEC4B
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html>
+  <head>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  </head>
+  <body bgcolor="#FFFFFF" text="#000000">
+    <p><a href="http://vasyhacker.ru/hack.rar">супер ссылка</a></p>
+  </body>
+</html>
+
+--------------CCD5D971BF7197648FFBEC4B--

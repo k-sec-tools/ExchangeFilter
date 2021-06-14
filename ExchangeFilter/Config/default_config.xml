@@ -1,0 +1,361 @@
+<config>
+  <configfilename>config.xml</configfilename>
+  <agentsettings>
+    <mailersettings>
+      <enabled>1</enabled>
+      <server>127.0.0.1</server>
+      <port>25</port>
+      <username>username</username>
+      <password>password</password>
+      <fromaddress>from@addres.com</fromaddress>
+      <defaultrecipient>from@addres.com</defaultrecipient>
+      <subject>subject</subject>
+      <body>body</body>
+    </mailersettings>
+    <parameters>
+      <parameter name="checkMessageBody">1</parameter>
+      <parameter name="checkMessageSubject">1</parameter>
+      <parameter name="checkAttachments">1</parameter>
+      <parameter name="scanArchives">1</parameter>
+      <parameter name="checkMessageHeaders">1</parameter>
+      <parameter name="checkSmtpSession">1</parameter>
+      <parameter name="attachmentSizeThreshold">30720</parameter>
+      <parameter name="attachmentUnarchivedSizeThreshold">30720</parameter>
+      <parameter name="attachmentArchiveDepth">3</parameter>
+      <parameter name="attachmentArchiveProcessingTime">1000</parameter>
+      <parameter name="blockUnprocessedArchives">1</parameter>
+      <parameter name="useMetrics">1</parameter>
+      <parameter name="logOnlyMode">0</parameter>
+      <parameter name="agentEnabled">1</parameter>
+      <parameter name="gcCollectInterval">30</parameter>
+      <parameter name="action">header</parameter>
+    </parameters>
+    <filtermodules>
+      <module>
+        <name>SelfSentChecking</name>
+        <whitelistmatchweight>0</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>YaraFileChecking</name>
+        <whitelistmatchweight>0</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>MessageBodyChecking</name>
+        <whitelistmatchweight>0</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>UrlChecking</name>
+        <whitelistmatchweight>2</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>FilenameChecking</name>
+       <whitelistmatchweight>2</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>ArchiveProcessing</name>
+       <whitelistmatchweight>0</whitelistmatchweight>
+        <unprocessedweight>1</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>MessageSubjectChecking</name>
+       <whitelistmatchweight>2</whitelistmatchweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+      </module>
+      <module>
+        <name>Undefined</name>
+       <whitelistmatchweight>0</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>EmailAddressChecking</name>
+       <whitelistmatchweight>2</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>MessageHeadersChecking</name>
+       <whitelistmatchweight>1</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>MessageIdChecking_List</name>
+       <whitelistmatchweight>2</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>2</blacklistmatchweight>
+      </module>
+      <module>
+        <name>MessageIdChecking_Native</name>
+       <whitelistmatchweight>2</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>1</blacklistmatchweight>
+      </module>
+      <module>
+        <name>SmtpSessionChecking_Internal</name>
+       <whitelistmatchweight>2</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>0</blacklistmatchweight>
+      </module>
+      <module>
+        <name>SmtpSessionChecking_List</name>
+       <whitelistmatchweight>2</whitelistmatchweight>
+        <unprocessedweight>0</unprocessedweight>
+        <blacklistmatchweight>0</blacklistmatchweight>
+      </module>
+    </filtermodules>
+    <yarafolderpath>C:\Path\To\ExchangeFilter\Config\Yara\</yarafolderpath>
+    <yarasignwildcard>*.yars</yarasignwildcard>
+    <yararulewildcard>*.yar</yararulewildcard>
+    <yarausefastscan>1</yarausefastscan>
+    <sevenziplibpath>C:\Path\To\7-Zip\7z.dll</sevenziplibpath>
+    <inboundmaildomains>
+      <domain>*@sampledomaincin.com</domain>
+      <domain>*@*.*</domain>
+    </inboundmaildomains>
+    <internalNetworks>
+      <subnet>fc00::/7</subnet>
+      <subnet>10.0.0.0/8</subnet>
+      <subnet>172.16.0.0/12</subnet>
+      <subnet>192.168.0.0/16</subnet>
+    </internalNetworks>
+    <headers>
+      <suspicious>
+        <name>X-Malicious-Message</name>
+        <value>YES</value>
+      </suspicious>
+      <processed>
+        <name>X-Processed-Message</name>
+        <value>YES</value>
+      </processed>
+      <whitelisted>
+        <name>X-Whitelisted-Message</name>
+        <value>YES</value>
+      </whitelisted>
+      <blacklist>
+        <header>
+          <name>X-Suspicious-Message</name>
+          <valuetype>string</valuetype>
+          <value>YES</value>
+          <value>MORE_THAN_YES</value>
+        </header>
+      </blacklist>
+      <whitelist>
+        <header>
+          <name>X-Good-Message</name>
+          <valuetype>string</valuetype>
+          <value>YES</value>
+          <value>MORE_THAN_YES</value>
+        </header>
+        <header>
+          <name>X-Very-Good-Message</name>
+          <valuetype>rgx</valuetype>
+          <value>.*@(nice)|(good)-message\d\.header</value>
+        </header>
+      </whitelist>
+    </headers>
+  </agentsettings>
+  <messagebodyprocessingsettings>
+    <hyperlinkregex>((www\.|(http|https|ftp|file)+\:\/\/)[&#95;.a-z0-9-]+\.[a-z0-9\/&amp;&#95;:@=.+?,##%&amp;~-]*[^.|\'|\# |!|\(|?|,| |&gt;|&lt;|;|\)])</hyperlinkregex>    <hyperlinks>
+      <whitelist>
+        <rgx>^((https?:)?(//)?)*site1/</rgx>
+        <rgx>^((https?:)?(//)?)*site2/</rgx>
+      </whitelist>
+      <blacklist>
+        <localpathpart>.rar</localpathpart>
+        <localpathpart>.scr</localpathpart>
+        <localpathpart>.exe</localpathpart>
+        <rgx>^(?:(?:ftp|http|file|sftp)s?:)?//(\d+|0x[0-9a-f]+|(?:0\d*\.){3}0\d*)(?:/|$)</rgx>
+        <rgx>(url:)?((((http(s)?:)?(//)?)){0,})(www.)?(cort)\.(as/)(.*)?</rgx>
+      </blacklist>
+    </hyperlinks>
+    <bodytext>
+      <blacklist>
+        <rgx>квот. почт.*</rgx>
+        <rgx>обнови.* свой аккаунт</rgx>
+        <acword>issues regarding your email</acword>
+        <acword>deactivate your email</acword>
+        <acword>квота почты</acword>
+        <acword>обновите свой аккаунт</acword>
+        <acword>лимит квоты вашего почтового ящика</acword>
+        <acword>лимит хранилища электронной почты</acword>
+        <acword>размер своего почтового ящика</acword>
+        <acword>почтовый ящик заполнен</acword>
+        <acword>устройство и почтовый ящик взломаны</acword>
+        <acword>мастурбиру</acword>
+        <acword>антивирус не поможет</acword>
+        <acword>удалю все ваши данные</acword>
+        <acword>mailbox is full</acword>
+        <acword>capacity of your mailbox</acword>
+      </blacklist>
+      <whitelist>
+        <rgx>(nice)\d</rgx>
+        <acword>good2</acword>
+      </whitelist>
+    </bodytext>
+  </messagebodyprocessingsettings>
+  <messagesubjectprocessingsettings>
+    <subjecttext>
+      <blacklist>
+        <rgx>^(спам)$</rgx>
+        <rgx>^(спам)$</rgx>
+        <rgx>квот. почт.*</rgx>
+        <rgx>обнови.* свой аккаунт</rgx>
+        <acword>mailbox shutdown</acword>
+        <acword>почтовый ящик заполнен</acword>
+        <acword>вирусная активность</acword>
+        <acword>емкость почтового ящика</acword>
+        <acword>устройство может быть заблокирован</acword>
+        <acword>устройство будет заблокирован</acword>
+        <acword>проверка учетной записи</acword>
+        <acword>mailbox storage limit</acword>
+        <acword>предупреждение администратора почты</acword>
+        <acword>письмо от ит-службы поддержки</acword>
+        <acword>mailbox is full</acword>
+        <acword>о заказе</acword>
+        <acword>capacity of your mailbox</acword>
+        <acword>проверка подлинности microsoft</acword>
+        <acword>последнее предупреждение</acword>
+        <acword>обновление пароля</acword>
+        <acword>аккаунт взломан</acword>
+        <acword>проверьте целостность</acword>
+        <acword>размер почтового ящика</acword>
+      </blacklist>
+      <whitelist>
+        <rgx>(not)\d(spam)</rgx>
+        <acword>not2spam</acword>
+      </whitelist>
+    </subjecttext>
+  </messagesubjectprocessingsettings>
+  <attachments>
+    <archivefiletypes>
+      <fileextension>*.001</fileextension>
+      <fileextension>*.7z</fileextension>
+      <fileextension>*.ar</fileextension>
+      <fileextension>*.arj</fileextension>
+      <fileextension>*.ace</fileextension>
+      <fileextension>*.bz2</fileextension>
+      <fileextension>*.bzip2</fileextension>
+      <fileextension>*.cab</fileextension>
+      <fileextension>*.chm</fileextension>
+      <fileextension>*.cpio</fileextension>
+      <fileextension>*.cramfs</fileextension>
+      <fileextension>*.dmg</fileextension>
+      <fileextension>*.ext</fileextension>
+      <fileextension>*.fat</fileextension>
+      <fileextension>*.gpt</fileextension>
+      <fileextension>*.gz</fileextension>
+      <fileextension>*.gzip</fileextension>
+      <fileextension>*.hfs</fileextension>
+      <fileextension>*.ihex</fileextension>
+      <fileextension>*.iso</fileextension>
+      <fileextension>*.img</fileextension>
+      <fileextension>*.lzh</fileextension>
+      <fileextension>*.lzma</fileextension>
+      <fileextension>*.mbr</fileextension>
+      <fileextension>*.msi</fileextension>
+      <fileextension>*.nsis</fileextension>
+      <fileextension>*.ntfs</fileextension>
+      <fileextension>*.qcow2</fileextension>
+      <fileextension>*.rar</fileextension>
+      <fileextension>*.rpm</fileextension>
+      <fileextension>*.squashfs</fileextension>
+      <fileextension>*.tar</fileextension>
+      <fileextension>*.udf</fileextension>
+      <fileextension>*.uefi</fileextension>
+      <fileextension>*.vdi</fileextension>
+      <fileextension>*.vhd</fileextension>
+      <fileextension>*.vmdk</fileextension>
+      <fileextension>*.wim</fileextension>
+      <fileextension>*.xar</fileextension>
+      <fileextension>*.xz</fileextension>
+      <fileextension>*.z</fileextension>
+      <fileextension>*.zip</fileextension>
+    </archivefiletypes>
+    <pdfdisarm>
+      <keyword>/JS</keyword>
+      <keyword>/JavaScript</keyword>
+      <keyword>/AA</keyword>
+      <keyword>/OpenAction</keyword>
+      <keyword>/RichMedia</keyword>
+      <keyword>/Launch</keyword>
+    </pdfdisarm>
+    <whitelist>
+      <attachment>*fiddlercap*.saz</attachment>
+      <attachment>*.har</attachment>
+      <attachment>*.pcapng</attachment>
+    </whitelist>
+    <blacklist>
+      <attachment>*.ade</attachment>
+      <attachment>*.adp</attachment>
+      <attachment>*.ace</attachment>
+      <attachment>*.bat</attachment>
+      <attachment>*.chm</attachment>
+      <attachment>*.cmd</attachment>
+      <attachment>*.com</attachment>
+      <attachment>*.cpl</attachment>
+      <attachment>*.csh</attachment>
+    </blacklist>
+    <yaraext>
+      <rule>
+        <fileextension>*.vcf</fileextension>
+        <yarafile>*sign.yar</yarafile>
+      </rule>
+    </yaraext>
+  </attachments>
+  <messageIDs>
+    <whitelist>
+      <messageID>*@message.id1</messageID>
+      <messageID>*@*.message.id2</messageID>
+    </whitelist>
+    <native>
+      <messageID>*@sample123456.com</messageID>
+    </native>
+    <blacklist>
+      <messageID>*@message.id3</messageID>
+      <messageID>*@*.message.id4</messageID>
+    </blacklist>
+  </messageIDs>
+  <recipients>
+    <whitelist>
+      <emailaddress>user1@domain.com</emailaddress>
+      <emailaddress>user2@domain.com</emailaddress>
+    </whitelist>
+    <blacklist>
+      <emailaddress>user3@domain.com</emailaddress>
+      <emailaddress>user4@domain.com</emailaddress>
+    </blacklist>
+  </recipients>
+  <senders>
+    <whitelist>
+      <emailaddress>user5@domain.com</emailaddress>
+      <emailaddress>user6@domain.com</emailaddress>
+    </whitelist>
+    <blacklist>
+      <emailaddress>user7@domain.com</emailaddress>
+      <emailaddress>user8@domain.com</emailaddress>
+    </blacklist>
+  </senders>
+  <networks>
+    <blacklistedNetworks>
+      <subnet>8.8.8.8</subnet>
+      <subnet>8.8.8.8</subnet>
+    </blacklistedNetworks>
+    <whitelistedNetworks>
+      <subnet>8.8.8.8</subnet>
+      <subnet>8.8.8.8</subnet>
+    </whitelistedNetworks>
+  </networks>
+</config>

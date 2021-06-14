@@ -1,0 +1,356 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="config">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="configfilename" type="xs:string" />
+        <xs:element name="agentsettings">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="mailersettings">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="enabled" type="xs:unsignedByte" />
+                    <xs:element name="server" type="xs:string" />
+                    <xs:element name="port" type="xs:unsignedByte" />
+                    <xs:element name="username" type="xs:string" />
+                    <xs:element name="password" type="xs:string" />
+                    <xs:element name="fromaddress" type="xs:string" />
+                    <xs:element name="defaultrecipient" type="xs:string" />
+                    <xs:element name="subject" type="xs:string" />
+                    <xs:element name="body" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="parameters">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="parameter">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute name="name" type="xs:string" use="required" />
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="filtermodules">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="module">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:choice maxOccurs="unbounded">
+                            <xs:element name="name" type="xs:string" />
+                            <xs:element name="whitelistmatchweight" type="xs:unsignedByte" />
+                            <xs:element name="unprocessedweight" type="xs:unsignedByte" />
+                            <xs:element name="blacklistmatchweight" type="xs:unsignedByte" />
+                          </xs:choice>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="yarafolderpath" type="xs:string" />
+              <xs:element name="yarasignwildcard" type="xs:string" />
+              <xs:element name="yararulewildcard" type="xs:string" />
+              <xs:element name="yarausefastscan" type="xs:unsignedByte" />
+              <xs:element name="sevenziplibpath" type="xs:string" />
+              <xs:element name="inboundmaildomains">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="domain" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="internalNetworks">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="subnet" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="headers">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="suspicious">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="name" type="xs:string" />
+                          <xs:element name="value" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="processed">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="name" type="xs:string" />
+                          <xs:element name="value" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="whitelisted">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="name" type="xs:string" />
+                          <xs:element name="value" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="blacklist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="header">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="name" type="xs:string" />
+                                <xs:element name="valuetype" type="xs:string" />
+                                <xs:element maxOccurs="unbounded" name="value" type="xs:string" />
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="whitelist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element maxOccurs="unbounded" name="header">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="name" type="xs:string" />
+                                <xs:element name="valuetype" type="xs:string" />
+                                <xs:element maxOccurs="unbounded" name="value" type="xs:string" />
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="messagebodyprocessingsettings">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="hyperlinkregex" type="xs:string" />
+              <xs:element name="hyperlinks">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="whitelist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element maxOccurs="unbounded" name="rgx" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="blacklist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element maxOccurs="unbounded" name="localpathpart" type="xs:string" />
+                          <xs:element maxOccurs="unbounded" name="rgx" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="bodytext">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="blacklist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element maxOccurs="unbounded" name="rgx" type="xs:string" />
+                          <xs:element maxOccurs="unbounded" name="acword" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="whitelist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="rgx" type="xs:string" />
+                          <xs:element name="acword" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="messagesubjectprocessingsettings">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="subjecttext">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="blacklist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element maxOccurs="unbounded" name="rgx" type="xs:string" />
+                          <xs:element maxOccurs="unbounded" name="acword" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="whitelist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="rgx" type="xs:string" />
+                          <xs:element name="acword" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="attachments">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="archivefiletypes">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="fileextension" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="pdfdisarm">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="keyword" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="whitelist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="attachment" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="blacklist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="attachment" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="yaraext">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="rule">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="fileextension" type="xs:string" />
+                          <xs:element name="yarafile" type="xs:string" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="messageIDs">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="whitelist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="messageID" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="native">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="messageID" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="blacklist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="messageID" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="recipients">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="whitelist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="emailaddress" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="blacklist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="emailaddress" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="senders">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="whitelist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="emailaddress" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="blacklist">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="emailaddress" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="networks">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="blacklistedNetworks">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="subnet" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="whitelistedNetworks">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="subnet" type="xs:string" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

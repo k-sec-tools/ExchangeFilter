@@ -1,0 +1,27 @@
+rule html: TEXT {
+    strings:
+        $tag = "<HTML>" fullword nocase
+    condition:
+        $tag
+}
+
+rule pdf : PDF {
+    strings:
+        $magic = { 25 50 44 46 }
+        
+    condition:
+        $magic at 0
+}
+
+
+rule executable : executable {
+strings:
+    $magic1 = { 4d 5a } // MZ
+    $magic2 = {46 75 6E 63 74 69 6F 6E} //vbs
+    $magic3 = {72 65 67 66} //reg
+    $magic4 = {FF 4B 45 59 42 20 20 20} //sys
+    $magic5 = {46 57 53} //swf
+    $magic6 = {40 65 63 68} //BATCH
+condition:
+    for any of ($magic*) :($ at 0)
+}

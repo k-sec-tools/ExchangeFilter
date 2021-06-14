@@ -1,0 +1,39 @@
+﻿Return-Path: <123@456.ru>
+X-Real-To: 123@sampledomaincin.com
+Received: from [10.5.5.12] (HELO mx2.mail.rambler.ru)
+  by mail161.456.ru (rmaild SMTP 1.2.41)
+  with ESMTP id 366270569 for 123@234.ru; Mon, 10 Apr 2017 10:44:59 +0300
+To: 123 <123@sampledomaincin.com>
+From: 123 <123@456.ru>
+Subject: 123
+Message-ID: <da2f0948-8472-c2ae-5f04-aa0d87d19f5b@456.ru>
+Date: Mon, 10 Apr 2017 12:44:57 +0500
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101
+ Thunderbird/45.8.0
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="------------CCD5D971BF7197648FFBEC4B"
+
+This is a multi-part message in MIME format.
+--------------CCD5D971BF7197648FFBEC4B
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+
+гууд
+
+
+--------------CCD5D971BF7197648FFBEC4B
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html>
+  <head>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  </head>
+  <body bgcolor="#FFFFFF" text="#000000">
+    <p><</p>
+  </body>
+</html>
+
+--------------CCD5D971BF7197648FFBEC4B--

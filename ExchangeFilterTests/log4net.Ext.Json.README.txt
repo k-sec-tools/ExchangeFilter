@@ -1,0 +1,27 @@
+﻿A patch has been proposed to LOG4NET here: https://issues.apache.org/jira/browse/LOG4NET-419
+
+This is a later stand-alone dll version. Start experimenting with a config like this:
+
+<?xml version="1.0"?>
+<configuration>
+  <configSections>
+    <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
+  </configSections>
+  <log4net>
+    <loggerfactory type="log4net.Util.Stamps.StampingLoggerFactory, log4net.Ext.Json">      
+    </loggerfactory>
+    <appender name="FileAppender" type="log4net.Appender.RollingFileAppender">
+      <param name="File" value="log/log" />
+      <param name="AppendToFile" value="true" />
+      <param name="DatePattern" value="_yyyyMMddHH&quot;.log&quot;" />
+      <param name="RollingStyle" value="Date" />
+      <param name="StaticLogFileName" value="false" />
+      <layout type="log4net.Layout.SerializedLayout, log4net.Ext.Json">
+      </layout>
+    </appender>
+    <root>
+      <level value="DEBUG"/>
+      <appender-ref ref="FileAppender"/>
+    </root>
+  </log4net>
+</configuration>
