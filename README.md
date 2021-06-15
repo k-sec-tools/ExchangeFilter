@@ -20,7 +20,7 @@ Using third party libraries:
 * https://github.com/gdziadkiewicz/log4net.Ext.Json
 * https://github.com/lduchosal/ipnetwork
 
-## Install
+## Installation
 * Stop-Service msexchangetransport
 * Install-TransportAgent -Name "ExchangeFilter" -TransportAgentFactory  "ExchangeFilterAgentFactory " -AssemblyPath "c:\Path\To\FilterBinaries\ExchangeFilter.dll"
 * Set-TransportAgent "ExchangeFilter" -Priority 10
