@@ -21,11 +21,11 @@ Using third party libraries:
 * https://github.com/lduchosal/ipnetwork
 
 ## Install
-Stop-Service msexchangetransport
-Install-TransportAgent -Name "ExchangeFilter" -TransportAgentFactory  "ExchangeFilterAgentFactory " -AssemblyPath "c:\Path\To\FilterBinaries\ExchangeFilter.dll"
-Set-TransportAgent "ExchangeFilter" -Priority 10
-Enable-TransportAgent -identity ExchangeFilter
-Start-Service msexchangetransport
+* Stop-Service msexchangetransport
+* Install-TransportAgent -Name "ExchangeFilter" -TransportAgentFactory  "ExchangeFilterAgentFactory " -AssemblyPath "c:\Path\To\FilterBinaries\ExchangeFilter.dll"
+* Set-TransportAgent "ExchangeFilter" -Priority 10
+* Enable-TransportAgent -identity ExchangeFilter
+* Start-Service msexchangetransport
 
 ## Configuration
 Config.cs - Class contains necessary configurations, without which agents work is impossible.
