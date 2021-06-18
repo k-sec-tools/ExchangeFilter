@@ -20,6 +20,11 @@ Using third party libraries:
 * https://github.com/gdziadkiewicz/log4net.Ext.Json
 * https://github.com/lduchosal/ipnetwork
 
+## Requirements
+Linyaranet requires .Net version 4.6 and higher. You can check if your server support it:
+* Check your exchange server version https://docs.microsoft.com/en-us/exchange/new-features/build-numbers-and-release-dates?view=exchserver-2019
+* Check if it support .Net v4.6 or higher https://docs.microsoft.com/en-us/exchange/plan-and-deploy/supportability-matrix?view=exchserver-2019
+
 ## Installation
 * Stop-Service msexchangetransport
 * Install-TransportAgent -Name "ExchangeFilter" -TransportAgentFactory  "ExchangeFilterAgentFactory " -AssemblyPath "c:\Path\To\FilterBinaries\ExchangeFilter.dll"
