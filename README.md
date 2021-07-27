@@ -27,6 +27,7 @@ Linyaranet requires .Net version 4.6 and higher. You can check if your server su
 
 ## Installation
 * Stop-Service msexchangetransport
+* ls "c:\Path\To\FilterBinaries" -Recurse | Unblock-File
 * Install-TransportAgent -Name "ExchangeFilter" -TransportAgentFactory  "ExchangeFilterAgentFactory " -AssemblyPath "c:\Path\To\FilterBinaries\ExchangeFilter.dll"
 * Set-TransportAgent "ExchangeFilter" -Priority 10
 * Enable-TransportAgent -identity ExchangeFilter
