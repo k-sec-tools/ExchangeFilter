@@ -10,6 +10,7 @@ Checks MessageId and source subnet of messages.
 Can send user email notifications about potentially malicious messages.
 Marks potentially malicious message with special header, which helps you archive and reject malicious messages on your Exchange server.
 Uses metrics to decide whether a message is malicious.
+Bruteforces archive attachments with the dictionary generated on messahe text (bad guys like that way to hide malicious files from antiviruses).
 
 Using third party libraries:
 * https://github.com/pdonald/aho-corasick
