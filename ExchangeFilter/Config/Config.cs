@@ -29,7 +29,6 @@ namespace ExchangeFilter
         public const bool CheckAttachmentsDefault = false;
         public const bool CheckSmtpSessionDefault = false;
         public const bool AgentEnabledDefault = true;
-        public const bool UseMetricsDefault = false;
         public const bool LogOnlyModeDefault= false;
         public const int AgentModuleWeightDefault = 4;
 
@@ -38,7 +37,6 @@ namespace ExchangeFilter
         public const string WhiteListedMailHeaderDefault = "X-Whitelisted-Message";
         public const string HeaderValueDefault = "YES";
         public const Header.HeaderValueTypeEnum HeaderValueTypeDefault = Header.HeaderValueTypeEnum.Wildcard;
-        public const string AgentActionDefault = "header";
 
 
         // hardcoded list of supported archive file types

@@ -24,12 +24,16 @@
       <parameter name="attachmentArchiveDepth">3</parameter>
       <parameter name="attachmentArchiveProcessingTime">1000</parameter>
       <parameter name="blockUnprocessedArchives">1</parameter>
-      <parameter name="useMetrics">1</parameter>
       <parameter name="logOnlyMode">0</parameter>
       <parameter name="agentEnabled">1</parameter>
       <parameter name="gcCollectInterval">30</parameter>
-      <parameter name="action">header</parameter>
     </parameters>
+    <actions>
+      <action maxscore ="0">accept</action>/>
+      <action minscore ="1" maxscore ="10000">header</action>
+      <action minscore ="10001" maxscore ="100000">subject</action>
+      <action minscore ="100001">reject</action>/>
+    </actions>
     <filtermodules>
       <module>
         <name>SelfSentChecking</name>
@@ -57,61 +61,61 @@
       </module>
       <module>
         <name>FilenameChecking</name>
-       <whitelistmatchweight>2</whitelistmatchweight>
+        <whitelistmatchweight>2</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>2</blacklistmatchweight>
       </module>
       <module>
         <name>ArchiveProcessing</name>
-       <whitelistmatchweight>0</whitelistmatchweight>
+        <whitelistmatchweight>0</whitelistmatchweight>
         <unprocessedweight>1</unprocessedweight>
         <blacklistmatchweight>2</blacklistmatchweight>
       </module>
       <module>
         <name>MessageSubjectChecking</name>
-       <whitelistmatchweight>2</whitelistmatchweight>
+        <whitelistmatchweight>2</whitelistmatchweight>
         <blacklistmatchweight>2</blacklistmatchweight>
         <unprocessedweight>0</unprocessedweight>
       </module>
       <module>
         <name>Undefined</name>
-       <whitelistmatchweight>0</whitelistmatchweight>
+        <whitelistmatchweight>0</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>2</blacklistmatchweight>
       </module>
       <module>
         <name>EmailAddressChecking</name>
-       <whitelistmatchweight>2</whitelistmatchweight>
+        <whitelistmatchweight>2</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>2</blacklistmatchweight>
       </module>
       <module>
         <name>MessageHeadersChecking</name>
-       <whitelistmatchweight>1</whitelistmatchweight>
+        <whitelistmatchweight>1</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>2</blacklistmatchweight>
       </module>
       <module>
         <name>MessageIdChecking_List</name>
-       <whitelistmatchweight>2</whitelistmatchweight>
+        <whitelistmatchweight>2</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>2</blacklistmatchweight>
       </module>
       <module>
         <name>MessageIdChecking_Native</name>
-       <whitelistmatchweight>2</whitelistmatchweight>
+        <whitelistmatchweight>2</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>1</blacklistmatchweight>
       </module>
       <module>
         <name>SmtpSessionChecking_Internal</name>
-       <whitelistmatchweight>2</whitelistmatchweight>
+        <whitelistmatchweight>2</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>0</blacklistmatchweight>
       </module>
       <module>
         <name>SmtpSessionChecking_List</name>
-       <whitelistmatchweight>2</whitelistmatchweight>
+        <whitelistmatchweight>2</whitelistmatchweight>
         <unprocessedweight>0</unprocessedweight>
         <blacklistmatchweight>0</blacklistmatchweight>
       </module>
@@ -119,7 +123,8 @@
     <yarafolderpath>C:\Path\To\ExchangeFilter\Config\Yara\</yarafolderpath>
     <yarasignwildcard>*.yars</yarasignwildcard>
     <yararulewildcard>*.yar</yararulewildcard>
-    <yarausefastscan>1</yarausefastscan>
+    <subjectupdatetext>[Dangerous message]:</subjectupdatetext>
+    <rejectresponsetext>This email was rejected by the antivirus as potentially dangerous.</rejectresponsetext>
     <sevenziplibpath>C:\Path\To\7-Zip\7z.dll</sevenziplibpath>
     <inboundmaildomains>
       <domain>*@sampledomaincin.com</domain>
@@ -168,7 +173,8 @@
     </headers>
   </agentsettings>
   <messagebodyprocessingsettings>
-    <hyperlinkregex>((www\.|(http|https|ftp|file)+\:\/\/)[&#95;.a-z0-9-]+\.[a-z0-9\/&amp;&#95;:@=.+?,##%&amp;~-]*[^.|\'|\# |!|\(|?|,| |&gt;|&lt;|;|\)])</hyperlinkregex>    <hyperlinks>
+    <hyperlinkregex>((www\.|(http|https|ftp|file)+\:\/\/)[&#95;.a-z0-9-]+\.[a-z0-9\/&amp;&#95;:@=.+?,##%&amp;~-]*[^.|\'|\# |!|\(|?|,| |&gt;|&lt;|;|\)])</hyperlinkregex>
+    <hyperlinks>
       <whitelist>
         <rgx>^((https?:)?(//)?)*site1/</rgx>
         <rgx>^((https?:)?(//)?)*site2/</rgx>

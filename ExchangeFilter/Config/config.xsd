@@ -28,8 +28,24 @@
                     <xs:element maxOccurs="unbounded" name="parameter">
                       <xs:complexType>
                         <xs:simpleContent>
-                          <xs:extension base="xs:string">
+                          <xs:extension base="xs:unsignedShort">
                             <xs:attribute name="name" type="xs:string" use="required" />
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="actions">
+                <xs:complexType mixed="true">
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="action">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute name="maxscore" type="xs:unsignedInt" use="optional" />
+                            <xs:attribute name="minscore" type="xs:unsignedInt" use="optional" />
                           </xs:extension>
                         </xs:simpleContent>
                       </xs:complexType>
@@ -58,7 +74,8 @@
               <xs:element name="yarafolderpath" type="xs:string" />
               <xs:element name="yarasignwildcard" type="xs:string" />
               <xs:element name="yararulewildcard" type="xs:string" />
-              <xs:element name="yarausefastscan" type="xs:unsignedByte" />
+              <xs:element name="subjectupdatetext" type="xs:string" />
+              <xs:element name="rejectresponsetext" type="xs:string" />
               <xs:element name="sevenziplibpath" type="xs:string" />
               <xs:element name="inboundmaildomains">
                 <xs:complexType>

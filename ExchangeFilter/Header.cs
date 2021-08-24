@@ -35,7 +35,6 @@ namespace ExchangeFilter
 	{
 		public Header SusupiciousMailHeader { get; set; }
 		public Header ProcessedMailHeader { get; set; }
-		public Header WhiteListedMailHeader { get; set; }
 		public List<Header> FilterHeadersWhiteList { get; set; }
 		public List<Header> FilterHeadersBlackList { get; set; }
 
@@ -43,7 +42,6 @@ namespace ExchangeFilter
 		{
 			SusupiciousMailHeader = new Header();
 			ProcessedMailHeader = new Header();
-			WhiteListedMailHeader = new Header();
 			FilterHeadersWhiteList = new List<Header>();
 			FilterHeadersBlackList = new List<Header>();
 		}

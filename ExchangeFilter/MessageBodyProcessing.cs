@@ -1,208 +1,222 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using Microsoft.Exchange.Data.Transport.Email;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using HtmlAgilityPack;
 
 namespace ExchangeFilter
 {
-	public sealed partial class ExchangeFilterReceiveAgent
-	{
-		public MessageProcessingStatusSet ProcessMessageBody(Body body)
-		{
-			return ProcessTextBody(body);
-		}
+    public sealed partial class ExchangeFilterReceiveAgent
+    {
 
-		private MessageProcessingStatusSet ProcessTextBody(Body body)
-		{
-			string RegExBodyHyperLinkRgx = _exchangeAttachmentFilterConfig.hyperlinkRegEx;
-			Regex hyperLinkRegex = new Regex(RegExBodyHyperLinkRgx, RegexOptions.IgnoreCase);
-			Encoding encoding = GetEncodingFromString(body.CharsetName);
-			var messageProcessingStatusSet = new MessageProcessingStatusSet { FurtherChecksNeeded = true };
+        private MessageProcessingStatusSet ProcessMessageBody(Body body)
+        {
+            string RegExBodyHyperLinkRgx = _exchangeAttachmentFilterConfig.hyperlinkRegEx;
+            Regex hyperLinkRegex = new Regex(RegExBodyHyperLinkRgx, RegexOptions.IgnoreCase);
+            Stream memStream;
+            Encoding encoding = GetEncodingFromString(body.CharsetName);
+            var messageProcessingStatusSet = new MessageProcessingStatusSet { FurtherChecksNeeded = true };
 
-			if (body.TryGetContentReadStream(out var memStream))
-			{
-				using (StreamReader streamRead = new StreamReader(memStream, encoding))
-				{
-					String b = streamRead.ReadToEnd();
+            if (body.TryGetContentReadStream(out memStream))
+            {
+                using (StreamReader streamRead = new StreamReader(memStream, encoding))
+                {
+                    String b = streamRead.ReadToEnd();
 
-					messageProcessingStatusSet.MatchedProcessingStatusList.Add(CheckBody(b));
+                    messageProcessingStatusSet.MatchedProcessingStatusList.Add(CheckBody(b));
 
-					foreach (Match match in hyperLinkRegex.Matches(b))
-					{
-						messageProcessingStatusSet.MatchedProcessingStatusList.Add(CheckLink(match.ToString()));
-					}
+                    foreach (Match match in hyperLinkRegex.Matches(b))
+                    {
+                        messageProcessingStatusSet.MatchedProcessingStatusList.Add(CheckLink(match.ToString()));
+                    }
 
 
-				}
+                }
 
-				return messageProcessingStatusSet;
-			}
+                return messageProcessingStatusSet;
+            }
 
-			messageProcessingStatusSet.MatchedProcessingStatusList.Add(new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.CantProcess));
-			return messageProcessingStatusSet;
-		}
+            messageProcessingStatusSet.MatchedProcessingStatusList.Add(new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.CantProcess));
+            return messageProcessingStatusSet;
+        }
 
-		public static Encoding GetEncodingFromString(string encodingstring)
-		{
-			Encoding encoding;
-			if (string.IsNullOrEmpty(encodingstring))
-				return Encoding.UTF8;
+        public static Encoding GetEncodingFromString(string encodingstring)
+        {
+            Encoding encoding;
+            if (string.IsNullOrEmpty(encodingstring))
+                return Encoding.UTF8;
 
-			try
-			{
-				encoding = Encoding.GetEncoding(encodingstring);
-			}
-			catch (ArgumentException)
-			{
-				encoding = Encoding.UTF8;
-			}
+            try
+            {
+                encoding = Encoding.GetEncoding(encodingstring);
+            }
+            catch (System.ArgumentException)
+            {
+                encoding = Encoding.UTF8;
+            }
 
-			return encoding;
+            return encoding;
 
-		}
+        }
 
-		private MessageProcessingStatus CheckBody(string body)
-		{
+        private MessageProcessingStatus CheckBody(string body)
+        {
 
-			var regexWhiteList = _exchangeAttachmentFilterConfig.BodyWhitelistRgx;
-			var regexBlackList = _exchangeAttachmentFilterConfig.BodyBlacklistRgx;
-			var acBlackList = _exchangeAttachmentFilterConfig.BodyBlacklistAcWords;
-			var acWhiteList = _exchangeAttachmentFilterConfig.BodyWhitelistAcWords;
-			try
-			{
-				var lowerbody = body.ToLower();
+            var regexWhiteList = _exchangeAttachmentFilterConfig.BodyWhitelistRgx;
+            var regexBlackList = _exchangeAttachmentFilterConfig.BodyBlacklistRgx;
+            var acBlackList = _exchangeAttachmentFilterConfig.BodyBlacklistAcWords;
+            var acWhiteList = _exchangeAttachmentFilterConfig.BodyWhitelistAcWords;
+            try
+            {
+                var lowerbody = body.ToLower();
 
-				if (acWhiteList != null && SearchWithAhoCorasick(lowerbody, acWhiteList))
-				{
-					LogInfo("MessageBody whitelisted");
-					return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Whitelisted, "MessageBodyChecking", "body");
+                if (acWhiteList != null && SearchWithAhoCorasick(lowerbody, acWhiteList))
+                {
+                    LogInfo("MessageBody whitelisted");
+                    return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Whitelisted, "MessageBodyChecking", "body");
 
-				}
+                }
 
-				if (regexWhiteList != null && regexWhiteList.Any(x => Regex.IsMatch(body, x, RegexOptions.IgnoreCase)))
-				{
-					LogInfo("MessageBody whitelisted");
-					return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Whitelisted, "MessageBodyChecking", "body");
-				}
+                if (regexWhiteList != null && regexWhiteList.Any(x => Regex.IsMatch(body, x, RegexOptions.IgnoreCase)))
+                {
+                    LogInfo("MessageBody whitelisted");
+                    return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Whitelisted, "MessageBodyChecking", "body");
+                }
 
-				if (acBlackList != null && SearchWithAhoCorasick(lowerbody, acBlackList))
-				{
-					LogInfo("MessageBody blacklisted");
-					return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Blacklisted, "MessageBodyChecking", "body");
+                if (acBlackList != null && SearchWithAhoCorasick(lowerbody, acBlackList))
+                {
+                    LogInfo("MessageBody blacklisted");
+                    return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Blacklisted, "MessageBodyChecking", "body");
 
-				}
+                }
 
-				if (regexBlackList != null && regexBlackList.Any(x => Regex.IsMatch(body, x, RegexOptions.IgnoreCase)))
-				{
-					LogInfo("MessageBody blacklisted");
-					return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Blacklisted, "MessageBodyChecking", "body");
-				}
-
-
-			}
-
-			catch (Exception ex)
-			{
-				LogError($"Exception while body processing {ex.Message}");
-				return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.CantProcess, "MessageBodyChecking", "body");
-			}
+                if (regexBlackList != null && regexBlackList.Any(x => Regex.IsMatch(body, x, RegexOptions.IgnoreCase)))
+                {
+                    LogInfo("MessageBody blacklisted");
+                    return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.Blacklisted, "MessageBodyChecking", "body");
+                }
 
 
-			return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.NoMatch, "MessageBodyChecking", "body");
-		}
+            }
 
-		private MessageProcessingStatus CheckLink(string link)
-		{
+            catch (Exception ex)
+            {
+                LogError($"Exception while body processing {ex.Message}");
+                return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.CantProcess, "MessageBodyChecking", "body");
+            }
 
-			LogInfo("parse link : " + link);
 
-			if (CheckIsWhitelistedUrl(link))
-			{
-				LogInfo($"Link: {link} is whitelisted");
-				return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Whitelisted, "UrlChecking", link);
-			}
+            return new MessageProcessingStatus(AgentModuleName.MessageBodyChecking, MessageProcessingResult.NoMatch, "MessageBodyChecking", "body");
+        }
 
-			try
-			{
-				var uri = new Uri(link);
-				string pathpart = uri.LocalPath.ToLower();
-				if (_exchangeAttachmentFilterConfig.HyperlinkBlacklistPathParts.Any(s => pathpart.Contains(s)))
-				{
-					LogInfo($"Suspicious Hyperlink {link}");
-					return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Blacklisted, "UrlChecking", link);
-				}
-			}
-			catch (Exception)
-			{
-				try
-				{
-					var uri = new Uri($"updatedbyagent://{link}");
-					string pathpart = uri.LocalPath.ToLower();
-					if (_exchangeAttachmentFilterConfig.HyperlinkBlacklistPathParts.Any(s => pathpart.Contains(s)))
-					{
-						LogInfo($"Suspicious Hyperlink {link}");
-						return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Blacklisted, "UrlChecking", link);
-					}
-				}
-				catch (Exception e)
-				{
-					LogError($"Exception: cant process hyperlink as URI {link}: {e.Message}");
-				}
-			}
+        private MessageProcessingStatus CheckLink(string link)
+        {
 
-			if (_exchangeAttachmentFilterConfig.HyperlinkBlacklistRgx.Any(f => Regex.IsMatch(link, f, RegexOptions.IgnoreCase)))
-			{
-				LogInfo($"Hyperlink blacklisted with regexp {link}");
-				return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Blacklisted, "UrlChecking", link);
-			}
+            LogInfo("parse link : " + link);
 
-			return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.NoMatch, "UrlChecking", link);
+            if (CheckIsWhitelistedUrl(link))
+            {
+                LogInfo($"Link: {link} is whitelisted");
+                return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Whitelisted, "UrlChecking", link);
+            }
 
-		}
+            try
+            {
+                var uri = new Uri(link);
+                string pathpart = uri.LocalPath.ToLower();
+                if (_exchangeAttachmentFilterConfig.HyperlinkBlacklistPathParts.Any(s => pathpart.Contains(s)))
+                {
+                    LogInfo($"Suspicious Hyperlink {link}");
+                    return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Blacklisted, "UrlChecking", link);
+                }
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    var uri = new Uri($"updatedbyagent://{link}");
+                    string pathpart = uri.LocalPath.ToLower();
+                    if (_exchangeAttachmentFilterConfig.HyperlinkBlacklistPathParts.Any(s => pathpart.Contains(s)))
+                    {
+                        LogInfo($"Suspicious Hyperlink {link}");
+                        return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Blacklisted, "UrlChecking", link);
+                    }
+                }
+                catch (Exception e)
+                {
+                    LogError($"Exception: cant process hyperlink as URI {link}: {e.Message}");
+                }
+            }
 
-		private bool CheckIsWhitelistedUrl(string url)
-		{
-			var regexWhitelist = _exchangeAttachmentFilterConfig.HyperlinkWhitelistRgx;
+            if (_exchangeAttachmentFilterConfig.HyperlinkBlacklistRgx.Any(f => Regex.IsMatch(link, f, RegexOptions.IgnoreCase)))
+            {
+                LogInfo($"Hyperlink blacklisted with regexp {link}");
+                return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.Blacklisted, "UrlChecking", link);
+            }
 
-			try
-			{
-				if (regexWhitelist != null)
-				{
-					if (regexWhitelist.Any(x => Regex.IsMatch(url.Trim(), x, RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase)))
-					{
-						return true;
-					}
-					return false;
-				}
+            return new MessageProcessingStatus(AgentModuleName.UrlChecking, MessageProcessingResult.NoMatch, "UrlChecking", link);
 
-				LogInfo("Whitelist is empty!");
-				return false;
-			}
-			catch (Exception ex)
-			{
-				LogError($"Something went wrong with your Whitelist file settings. {ex.Message}");
-				return false;
-			}
-		}
+        }
 
-		public static string BodyToString(Body body)
-		{
-			var bodyReadStream = body.GetContentReadStream();
-			Encoding encoding = GetEncodingFromString(body.CharsetName);
-			using (var ms = new MemoryStream())
-			{
-				var buffer = new byte[32768];
-				int read;
-				while ((read = bodyReadStream.Read(buffer, 0, buffer.Length)) > 0)
-				{
-					ms.Write(buffer, 0, read);
-				}
-				ms.Position = 0;
+        private bool CheckIsWhitelistedUrl(string url)
+        {
+            var regexWhitelist = _exchangeAttachmentFilterConfig.HyperlinkWhitelistRgx;
 
-				return encoding.GetString(ms.ToArray());
-			}
-		}
-	}
+            try
+            {
+                if (regexWhitelist != null)
+                {
+                    if (regexWhitelist.Any(x => Regex.IsMatch(url.Trim(), x, RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase)))
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+
+                LogInfo("Whitelist is empty!");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Something went wrong with your Whitelist file settings. {ex.Message}");
+                return false;
+            }
+        }
+
+        public List<string> BodyToStringList(Body body)
+        {
+            Stream memStream;
+            Encoding encoding = GetEncodingFromString(body.CharsetName);
+            var ret = new List<string>();
+
+            if (body.TryGetContentReadStream(out memStream))
+            {
+                using (StreamReader streamRead = new StreamReader(memStream, encoding))
+                {
+                    String b = streamRead.ReadToEnd();
+                    string res = b;
+                    try
+                    {
+                        HtmlDocument htmlDoc = new HtmlDocument();
+                        htmlDoc.LoadHtml(b);
+                        res = htmlDoc.DocumentNode.InnerText;
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError($"Exception while parse as html: {ex.Message}");
+                        res = b;
+                    }
+
+                    ret = res.Split(new Char[] { ',', '\\', '\n', ' ', '.', '"', '\'' },
+                        StringSplitOptions.RemoveEmptyEntries).Distinct().OrderBy(q => q).ToList();
+                }
+
+            }
+
+            return ret;
+        }
+    }
 }

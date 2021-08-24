@@ -19,6 +19,7 @@ Using third party libraries:
 * https://logging.apache.org/log4net/
 * https://github.com/gdziadkiewicz/log4net.Ext.Json
 * https://github.com/lduchosal/ipnetwork
+* https://github.com/zzzprojects/html-agility-pack/blob/master/LICENSE
 
 ## Requirements
 Linyaranet requires .Net version 4.6 and higher. You can check if your server support it:

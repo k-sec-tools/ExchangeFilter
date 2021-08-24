@@ -197,7 +197,7 @@ namespace ExchangeFilter
 
 		private ExchangeFilterStatus ManageMessage(MessageProcessingStatusSet statusSet)
 		{
-			double threatLevel = 0;
+			int threatLevel = 0;
 			var whiteListMatches = 0;
 			var blackListMatches = 0;
 			var unProcessedMatches = 0;
@@ -307,116 +307,22 @@ namespace ExchangeFilter
 				}
 			}
 
-            ExchangeFilterStatusEnum agentAction;
-            switch (_exchangeAttachmentFilterConfig.AgentAction.ToLower())
+
+
+			foreach (var agentAction in _exchangeAttachmentFilterConfig.AgentActions)
             {
-                case "accept":
-                    agentAction = ExchangeFilterStatusEnum.Accept;
-                    break;
-				case "header":
-                    agentAction = ExchangeFilterStatusEnum.AddHeader;
-					break;
-                case "subject":
-                    agentAction = ExchangeFilterStatusEnum.UpdateMessageSubject;
-                    break;
-                case "reject":
-                    agentAction = ExchangeFilterStatusEnum.RejectMessage;
-                    break;
-				default:
-                    agentAction = ExchangeFilterStatusEnum.AddHeader;
-					break;
+                if (agentAction.Range.ContainsValue(threatLevel))
+                {
+                    return new ExchangeFilterStatus(agentAction.Action,
+                        $"Message processed, action: {agentAction.Action}; ThreatLevel:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}");
+                }
+            }
 
-			}
-			//
-			if (_exchangeAttachmentFilterConfig.UseMetrics)
-			{
-				if (threatLevel <= 0)
-				{
-					return new ExchangeFilterStatus(ExchangeFilterStatusEnum.Accept,
-						$"No match; ThreatLevel:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}");
-				}
-				return new ExchangeFilterStatus(agentAction,
-					$"Suspicious elements found; ThreatLevel:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}");
-			}
-
-
-			if (statusSet.MatchedProcessingStatusList.Any(x => (x.AgentModuleName == AgentModuleName.MessageHeadersChecking && x.Result == MessageProcessingResult.Blacklisted)))
-				return new ExchangeFilterStatus(agentAction,
-					$"Blacklisted by headers; ThreatLevel:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}");
-
-			if (statusSet.MatchedProcessingStatusList.Any(x =>
-					(x.AgentModuleName == AgentModuleName.EmailAddressChecking && x.Result == MessageProcessingResult.Whitelisted)
-					|| (x.AgentModuleName == AgentModuleName.MessageSubjectChecking && x.Result == MessageProcessingResult.Whitelisted)
-					|| (x.AgentModuleName == AgentModuleName.MessageIdChecking_List && x.Result == MessageProcessingResult.Whitelisted)
-					|| (x.AgentModuleName == AgentModuleName.MessageIdChecking_Native && x.Result == MessageProcessingResult.Whitelisted)
-				)
-			)
-			{
-				return new ExchangeFilterStatus(ExchangeFilterStatusEnum.Accept,
-					$"Whitelisted by sender, recipient or subject; ThreatLevel:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}");
-			}
-
-
-			const string NULLVALUE = "{{{null-value}}}";
-			var statusDictByObject = new Dictionary<string, List<MessageProcessingStatus>>();
-			var maxStatPerModule = new List<MessageProcessingStatus>();
-			var modulenames = statusSet.MatchedProcessingStatusList.Select(p => p.AgentModuleName).Distinct();
-			foreach (var modulename in modulenames)
-			{
-				var statusList = statusSet.MatchedProcessingStatusList.Where(p => p.AgentModuleName == modulename);
-
-				statusDictByObject.Clear();
-				statusDictByObject[NULLVALUE] = new List<MessageProcessingStatus>();
-
-				foreach (var statusItem in statusList)
-				{
-					string key = statusItem.ObjectName ?? NULLVALUE;
-					if (!statusDictByObject.ContainsKey(key))
-					{
-						statusDictByObject[key] = new List<MessageProcessingStatus>();
-					}
-					statusDictByObject[key].Add(statusItem);
-				}
-
-				var resultStatusList = new List<MessageProcessingStatus>();
-				foreach (var checkedPair in statusDictByObject)
-				{
-					if (!string.IsNullOrEmpty(checkedPair.Key))
-					{
-						var statusListPerObject = checkedPair.Value;
-						if (statusListPerObject.Any(x => x.Result == MessageProcessingResult.Whitelisted))
-						{
-							var tmpStatus = statusListPerObject.FirstOrDefault();
-							if (tmpStatus != null)
-							{
-								resultStatusList.Add(new MessageProcessingStatus(tmpStatus.AgentModuleName, MessageProcessingResult.Whitelisted, tmpStatus.Comment, tmpStatus.ObjectName));
-							}
-						}
-						else
-						{
-							resultStatusList.Add(GetWorstStatusFromList(statusListPerObject, modulename));
-						}
-					}
-				}
-				resultStatusList.AddRange(statusDictByObject[NULLVALUE]);
-
-				if (resultStatusList.Count > 0)
-				{
-					maxStatPerModule.Add(GetWorstStatusFromList(resultStatusList, modulename));
-				}
-			}
-
-			if (maxStatPerModule.Any(x => (x.Result > MessageProcessingResult.NoMatch) && (x.Result < MessageProcessingResult.Whitelisted)))
-			{
-				return new ExchangeFilterStatus(agentAction,
-					$"Suspicious elements found; ThreatLevel:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}");
-			}
-
-			return new ExchangeFilterStatus(ExchangeFilterStatusEnum.Accept,
-				$"No match; ThreatLevel:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}");
+            return new ExchangeFilterStatus(ExchangeFilterStatusEnum.Accept,
+                $"Message Accepted - ThreatLevel out of ranges:{threatLevel}; UnprocessedMatches:{unProcessedMatches}; BlacklistedMatches:{blackListMatches}; WhitelistedMatchess:{whiteListMatches}.");
 		}
 
-		private double GetWeight(MessageProcessingStatus status)
+		private int GetWeight(MessageProcessingStatus status)
 		{
 			int weight = 0;
 			if (_exchangeAttachmentFilterConfig.ModuleWeights.Find(x =>
@@ -538,6 +444,7 @@ namespace ExchangeFilter
 
 					try
 					{
+                        var bodyStringList = BodyToStringList(message.Body);
 						foreach (var attachment in message.Attachments)
 						{
 							var fileName = attachment.FileName;
@@ -579,7 +486,7 @@ namespace ExchangeFilter
 								}
 
 								var attachBytes = StreamToByteArray(attachment.GetContentReadStream());
-								var result = ProcessFileBytes(attachBytes, fileName, attachmentMD5);
+                                var result = ProcessFileBytes(attachBytes, fileName, attachmentMD5, bodyStringList);
 								messageProcessingStatusSet.MatchedProcessingStatusList.AddRange(result);
 							}
 							catch (Exception ex)
@@ -608,7 +515,7 @@ namespace ExchangeFilter
 			return messageProcessingStatusSet;
 		}
 
-		private List<MessageProcessingStatus> ProcessFileBytes(byte[] fileBytes, string fileName, string md5)
+		private List<MessageProcessingStatus> ProcessFileBytes(byte[] fileBytes, string fileName, string md5, List<string> possiblePasswordsStringList)
 		{
 			var attachmentStatusList = new List<MessageProcessingStatus>();
 			try
@@ -634,14 +541,21 @@ namespace ExchangeFilter
 				return attachmentStatusList;
 			}
 
+			//YaraChecking
+
 			bool yaraProcessed = false;
+
 
 			foreach (var yaraHelper in _exchangeAttachmentFilterConfig.YaraHelpers)
 			{
 				if (GetYaraQSByteArrayBool(fileBytes, yaraHelper.SignaturesPath))
 				{
-					yaraProcessed = true;
-					attachmentStatusList.Add(GetYaraQSByteArrayMPStatus(fileBytes, fileName, yaraHelper.RulesPath));
+					var yarastat = GetYaraQSByteArrayMPStatus(fileBytes, fileName, yaraHelper.RulesPath);
+					attachmentStatusList.Add(yarastat);
+					if (yarastat.Result == MessageProcessingResult.Blacklisted)
+					{
+						yaraProcessed = true;
+					}
 				}
 			}
 
@@ -650,18 +564,25 @@ namespace ExchangeFilter
 				if (yaraExtension.FileExtensions.Any(f =>
 					Regex.IsMatch(fileName, WildcardToRegex(f), RegexOptions.IgnoreCase)))
 				{
-					yaraProcessed = true;
-					attachmentStatusList.Add(
-						GetYaraQSByteArrayMPStatus(fileBytes, fileName, yaraExtension.YaraFilePath));
+					var yarastat = GetYaraQSByteArrayMPStatus(fileBytes, fileName, yaraExtension.YaraFilePath);
+					attachmentStatusList.Add(yarastat);
+					if (yarastat.Result == MessageProcessingResult.Blacklisted)
+					{
+						yaraProcessed = true;
+					}
 				}
 			}
 
+
 			//ArchiveChecking
-			if (!yaraProcessed && _exchangeAttachmentFilterConfig.ScanArchives &&
-				IsArchive(fileName, fileBytes))
+			if (_exchangeAttachmentFilterConfig.ScanArchives &&
+				IsArchive(fileName, fileBytes) && !yaraProcessed)
 			{
-				attachmentStatusList.Add(ProcessArchiveBytes(fileBytes, fileName, md5, 0));
+				attachmentStatusList.AddRange(ProcessArchiveBytes(fileBytes, fileName, md5, 0, possiblePasswordsStringList));
 			}
+
+
+
 
 			return attachmentStatusList;
 		}

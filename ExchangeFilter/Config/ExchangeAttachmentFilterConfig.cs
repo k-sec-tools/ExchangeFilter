@@ -171,8 +171,7 @@ namespace ExchangeFilter
 				var headers = root.Element("agentsettings").Element("headers");
 				AgentHeaders.ProcessedMailHeader = GetAgentHeader(headers, "processed", ProcessedMailHeader, HeaderValue, HeaderValueType);
 				AgentHeaders.SusupiciousMailHeader = GetAgentHeader(headers, "suspicious", SusupiciousMailHeader, HeaderValue, HeaderValueType);
-				AgentHeaders.WhiteListedMailHeader = GetAgentHeader(headers, "whitelisted", WhiteListedMailHeader, HeaderValue, HeaderValueType);
-				AgentHeaders.FilterHeadersBlackList = GetFilterHeadersList(headers, Config.HeaderValueTypeDefault, "blacklist");
+                AgentHeaders.FilterHeadersBlackList = GetFilterHeadersList(headers, Config.HeaderValueTypeDefault, "blacklist");
 				AgentHeaders.FilterHeadersWhiteList = GetFilterHeadersList(headers, Config.HeaderValueTypeDefault, "whitelist");
 
 				var senders = root.Element("senders");
@@ -320,6 +319,13 @@ namespace ExchangeFilter
 					log.Error($"Cannot load YARA files: {ex.Message}");
 				}
 
+                if (root.Element("agentsettings").Element("subjectupdatetext")?.Value != null)
+                    SubjectUpdText = root.Element("agentsettings").Element("subjectupdatetext")?.Value;
+
+                if (root.Element("agentsettings").Element("rejectresponsetext")?.Value != null)
+                    RejectMessageText = root.Element("agentsettings").Element("rejectresponsetext")?.Value;
+
+
 				var sevenzippath = root.Element("agentsettings").Element("sevenziplibpath").Value;
 				if (File.Exists(sevenzippath))
 					SevenZipLibPath = sevenzippath;
@@ -359,10 +365,8 @@ namespace ExchangeFilter
 					CheckAttachments = Config.CheckAttachmentsDefault;
 					CheckMessageHeaders = Config.CheckMessageHeadersDefault;
 					CheckSmtpSession = Config.CheckSmtpSessionDefault;
-					UseMetrics = Config.UseMetricsDefault;
 					LogOnlyMode = Config.LogOnlyModeDefault;
 					AgentEnabled = Config.AgentEnabledDefault;
-                    AgentAction = Config.AgentActionDefault;
 					return;
 				}
 
@@ -388,21 +392,55 @@ namespace ExchangeFilter
 					Config.CheckMessageHeadersDefault, "parameter");
 				CheckSmtpSession = GetParameterValueAsBool(parameters, "checkSmtpSession",
 					Config.CheckSmtpSessionDefault, "parameter");
-				UseMetrics = GetParameterValueAsBool(parameters, "useMetrics",
-					Config.CheckMessageHeadersDefault, "parameter");
 				LogOnlyMode = GetParameterValueAsBool(parameters, "logOnlyMode",
 					Config.CheckMessageHeadersDefault, "parameter");
 				AgentEnabled = GetParameterValueAsBool(parameters, "agentEnabled",
 					Config.CheckMessageHeadersDefault, "parameter");
-                AgentAction = GetParameterValue(parameters, "action", Config.AgentActionDefault, "parameter");
+
+                var actionsElement = root.Element("agentsettings").Element("actions");
+                if (actionsElement != null)
+                {
+                    var acts = new List<AgentAction>();
+                    foreach (var element in actionsElement.Elements("action").ToList())
+                    {
 
 
-            }
+                        var rng = new Range<int>(int.Parse(GetXMLElementAtributeValue(element, "minscore", int.MinValue.ToString())),
+                            int.Parse(GetXMLElementAtributeValue(element, "maxscore", int.MaxValue.ToString())));
+
+                        var elementAction = new AgentAction(rng, element.Value);
+
+                        if (acts.Count > 0)
+                        {
+                            var overlap = acts.FirstOrDefault(x => Range<int>.RangesOverlapping(rng, x.Range));
+                            if (overlap != null)
+                            {
+                                log.Error($"ranges overlapping: {elementAction} and {overlap}");
+                                acts.Remove(acts.FirstOrDefault(x => Range<int>.RangesOverlapping(rng, x.Range)));
+                            }
+                        }
+                        acts.Add(elementAction);
+                    }
+
+                    AgentActions = acts;
+                }
+                else
+                {
+                    AgentActions.Add(new AgentAction());
+                }
+
+
+			}
 			catch (Exception ex)
 			{
 				log.Error($"LoadConfig ERROR: {ex.Message}");
 			}
 		}
+
+        private static string GetXMLElementAtributeValue(XElement element, string attributename, string defaultValue)
+        {
+            return element.Attribute(attributename)?.Value ?? defaultValue;
+        }
 
 		private static List<AgentModule> GetModuleWeights(XElement subroot)
 		{
@@ -644,9 +682,7 @@ namespace ExchangeFilter
 		public bool CheckAttachments { get; private set; } = Config.CheckAttachmentsDefault;
 		public bool CheckSmtpSession { get; private set; } = Config.CheckSmtpSessionDefault;
 		public bool AgentEnabled { get; private set; } = Config.AgentEnabledDefault;
-		public bool UseMetrics { get; private set; } = Config.UseMetricsDefault;
 		public bool LogOnlyMode { get; private set; } = Config.LogOnlyModeDefault;
-        public string AgentAction { get; private set; } = Config.AgentActionDefault;
 
 		public AgentHeaders AgentHeaders { get; set; } = new AgentHeaders();
 		public string SusupiciousMailHeader { get; } = Config.SusupiciousMailHeaderDefault;
@@ -693,5 +729,131 @@ namespace ExchangeFilter
 		public List<string> PdfKeywords = new List<string>();
 
 		public string SevenZipLibPath = Config.ConfigFileSevenZipLibraryPath;
+
+        public List<ArchiveProperty> ArchiveEncryptedProperties = new List<ArchiveProperty>();
+
+        public string SubjectUpdText = "ALARM";
+        public string RejectMessageText = "Message rejected";
+        public List<AgentAction> AgentActions { get; private set; } = new List<AgentAction>();
+	}
+
+    public class AgentAction
+    {
+        public Range<int> Range { get; set; }
+        public ExchangeFilterStatusEnum Action { get; set; }
+
+
+        public AgentAction()
+        {
+            Range = new Range<int>(int.MinValue, int.MaxValue);
+            Action = ExchangeFilterStatusEnum.Accept;
+        }
+
+        public AgentAction(Range<int> rrange, string aaction)
+        {
+            Range = rrange;
+            switch (aaction.ToLower())
+            {
+                case "accept":
+                    Action = ExchangeFilterStatusEnum.Accept;
+                    break;
+                case "header":
+                    Action = ExchangeFilterStatusEnum.AddHeader;
+                    break;
+                case "subject":
+                    Action = ExchangeFilterStatusEnum.UpdateMessageSubject;
+                    break;
+                case "reject":
+                    Action = ExchangeFilterStatusEnum.RejectMessage;
+                    break;
+                default:
+                    Action = ExchangeFilterStatusEnum.AddHeader;
+                    break;
+            }
+        }
+
+        public override string ToString()
+        {
+            return string.Format("[{0} : {1}]", this.Range, this.Action);
+        }
+    }
+
+	public class ArchiveProperty
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+
+        public ArchiveProperty()
+        {
+            Name = null;
+            Value = null;
+        }
+
+        public static ArchiveProperty GetArchiveProperty(string name, string value)
+        {
+            var ap = new ArchiveProperty { Value = value, Name = name };
+            return ap;
+        }
+    }
+	
+
+	public class Range<T> where T : IComparable<T>
+	{
+        //https://stackoverflow.com/a/5343033
+
+		/// <summary>Minimum value of the range.</summary>
+		public T Minimum { get; set; }
+
+		/// <summary>Maximum value of the range.</summary>
+		public T Maximum { get; set; }
+
+		/// <summary>Presents the Range in readable format.</summary>
+		/// <returns>String representation of the Range</returns>
+		public override string ToString()
+		{
+			return string.Format("[{0} - {1}]", this.Minimum, this.Maximum);
+		}
+
+		/// <summary>Determines if the range is valid.</summary>
+		/// <returns>True if range is valid, else false</returns>
+		public bool IsValid()
+		{
+			return this.Minimum.CompareTo(this.Maximum) <= 0;
+		}
+
+		/// <summary>Determines if the provided value is inside the range.</summary>
+		/// <param name="value">The value to test</param>
+		/// <returns>True if the value is inside Range, else false</returns>
+		public bool ContainsValue(T value)
+		{
+			return (this.Minimum.CompareTo(value) <= 0) && (value.CompareTo(this.Maximum) <= 0);
+		}
+
+		/// <summary>Determines if this Range is inside the bounds of another range.</summary>
+		/// <param name="Range">The parent range to test on</param>
+		/// <returns>True if range is inclusive, else false</returns>
+		public bool IsInsideRange(Range<T> range)
+		{
+			return this.IsValid() && range.IsValid() && range.ContainsValue(this.Minimum) && range.ContainsValue(this.Maximum);
+		}
+
+		/// <summary>Determines if another range is inside the bounds of this range.</summary>
+		/// <param name="Range">The child range to test</param>
+		/// <returns>True if range is inside, else false</returns>
+		public bool ContainsRange(Range<T> range)
+		{
+			return this.IsValid() && range.IsValid() && this.ContainsValue(range.Minimum) && this.ContainsValue(range.Maximum);
+		}
+
+		public static bool RangesOverlapping(Range<int> r1, Range<int> r2)
+		{
+			return r1.IsValid() && r2.IsValid() && ((Math.Max(0, Math.Min(r1.Maximum, r2.Maximum) - Math.Max(r1.Minimum, r2.Minimum) + 1) != 0) || r1.ContainsRange(r2) || r1.IsInsideRange(r2));
+		}
+
+		public Range(T min, T max)
+		{
+			Minimum = min;
+			Maximum = max;
+		}
 	}
 }

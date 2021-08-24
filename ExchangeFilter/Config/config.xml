@@ -24,12 +24,16 @@
       <parameter name="attachmentArchiveDepth">3</parameter>
       <parameter name="attachmentArchiveProcessingTime">1000</parameter>
       <parameter name="blockUnprocessedArchives">1</parameter>
-      <parameter name="useMetrics">1</parameter>
       <parameter name="logOnlyMode">0</parameter>
       <parameter name="agentEnabled">1</parameter>
       <parameter name="gcCollectInterval">30</parameter>
-      <parameter name="action">header</parameter>
     </parameters>
+    <actions>
+      <action maxscore ="0">accept</action>/>
+      <action minscore ="1" maxscore ="10000">header</action>
+      <action minscore ="10001" maxscore ="100000">subject</action>
+      <action minscore ="100001">reject</action>/>
+    </actions>
     <filtermodules>
       <module>
         <name>SelfSentChecking</name>
@@ -119,7 +123,8 @@
     <yarafolderpath>C:\Path\To\ExchangeFilter\Config\Yara\</yarafolderpath>
     <yarasignwildcard>*.yars</yarasignwildcard>
     <yararulewildcard>*.yar</yararulewildcard>
-    <yarausefastscan>1</yarausefastscan>
+    <subjectupdatetext>[Dangerous message]:</subjectupdatetext>
+    <rejectresponsetext>This email was rejected by the antivirus as potentially dangerous.</rejectresponsetext>
     <sevenziplibpath>C:\Path\To\7-Zip\7z.dll</sevenziplibpath>
     <inboundmaildomains>
       <domain>*@sampledomaincin.com</domain>

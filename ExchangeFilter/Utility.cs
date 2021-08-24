@@ -8,6 +8,7 @@ using System.Net;
 using System.Security.Cryptography;
 using Microsoft.Exchange.Data.Mime;
 using libyaraNET;
+using SevenZip;
 
 namespace ExchangeFilter
 {
@@ -92,17 +93,99 @@ namespace ExchangeFilter
 		}
 
 
-		public MessageProcessingStatus ProcessArchiveBytes(byte[] archiveBytes, string attachmentFileName, string entryHash, int currentDepth)
-		{
-			var result =
-				new MessageProcessingStatus(AgentModuleName.ArchiveProcessing, MessageProcessingResult.NoMatch, $"Archive OK, MD5 {entryHash}", attachmentFileName);
+        public List<MessageProcessingStatus> ProcessArchiveBytes(byte[] archiveBytes, string attachmentFileName, string entryHash, int currentDepth, List<string> possiblePasswordsStringList)
+        {
+            return ProcessArchiveBytesViaSevenZip(archiveBytes, currentDepth + 1, attachmentFileName, possiblePasswordsStringList);
+        }
 
-			var stepresult = ProcessArchiveBytesViaSevenZip(archiveBytes, currentDepth + 1, attachmentFileName);
-			result = CompareStatusResults(result, stepresult);
-			return result;
+        private List<MessageProcessingStatus> ArchiveBytesProcessing(int currentDepth, string archiveName, List<string> possiblePasswordsStringList,
+            byte[] archiveBytes, int totalSize, MD5 md5, string password = null)
+        {
+            var result = new MessageProcessingStatus(AgentModuleName.ArchiveProcessing);
+            var results = new List<MessageProcessingStatus> { result };
+
+            if (password == null)
+            {
+                using (var abms = new MemoryStream(archiveBytes))
+                using (var extractor =
+                    new SevenZip.SevenZipExtractor(abms))
+                {
+                    results.AddRange(ProcessExtractor(currentDepth, archiveName, possiblePasswordsStringList, extractor,
+                        totalSize, md5));
+                }
+            }
+            else
+            {
+                using (var abms = new MemoryStream(archiveBytes))
+                using (var extractor =
+                    new SevenZip.SevenZipExtractor(abms, password))
+                {
+                    results.AddRange(ProcessExtractor(currentDepth, archiveName, possiblePasswordsStringList, extractor,
+                        totalSize, md5));
+                }
+            }
+
+
+
+
+            return results;
+        }
+
+
+		private List<MessageProcessingStatus> ProcessExtractor(int currentDepth, string archiveName, List<string> possiblePasswordsStringList,
+			SevenZipExtractor extractor, int totalSize, MD5 md5)
+		{
+
+			var stopwatch1 = new Stopwatch();
+			stopwatch1.Start();
+
+			var result = new MessageProcessingStatus(AgentModuleName.ArchiveProcessing);
+			var results = new List<MessageProcessingStatus> { result };
+			for (var cnt = 0; cnt <= extractor.FilesCount - 1; cnt++)
+			{
+				var entrySize = Convert.ToInt32(extractor.ArchiveFileData[cnt].Size);
+				var entryName = extractor.ArchiveFileData[cnt].FileName;
+				totalSize += entrySize;
+				if ((entrySize / 1024 <=
+					 _exchangeAttachmentFilterConfig.AttachmentSizeThreshold) &&
+					(totalSize / 1024 <= _exchangeAttachmentFilterConfig
+						.AttachmentUnarchivedSizeThreshold))
+				{
+					using (var stream = new MemoryStream())
+					{
+						extractor.ExtractFile(cnt, stream);
+						var md5hash = BitConverter.ToString(md5.ComputeHash(stream))
+							.Replace("-", string.Empty);
+
+						if (entryName != null)
+						{
+							results.Add(FilenameFilterStatus(entryName));
+						}
+						else
+						{
+							entryName = $"fakefilename {md5hash}";
+							LogInfo($"Archive entry process, cant read filename, md5: {entryName}");
+						}
+
+						results.AddRange(ProcessArchiveEntry(entryName, StreamToByteArray(stream),
+							md5hash, currentDepth + 1, possiblePasswordsStringList));
+					}
+				}
+				else
+				{
+
+					LogInfo($"Archive or entry too big, processing stopped - {entryName}");
+					results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing,
+						MessageProcessingResult.CantProcess, $"Too big archive/entry {entryName}",
+						archiveName));
+					break;
+				}
+			}
+			stopwatch1.Stop();
+			return results;
 		}
 
-		private MessageProcessingStatus ProcessArchiveBytesViaSevenZip(byte[] archiveBytes, int currentDepth, string archiveName)
+		private List<MessageProcessingStatus> ProcessArchiveBytesViaSevenZip(byte[] archiveBytes, int currentDepth, string archiveName, List<string> possiblePasswordsStringList)
 		{
 			var result = new MessageProcessingStatus(AgentModuleName.ArchiveProcessing);
 			var results = new List<MessageProcessingStatus> { result };
@@ -112,58 +195,103 @@ namespace ExchangeFilter
 			{
 				try
 				{
-					using (var extractor = new SevenZip.SevenZipExtractor(new MemoryStream(archiveBytes)))
+					using (var abms = new MemoryStream(archiveBytes))
+					using (var extractor = new SevenZip.SevenZipExtractor(abms))
 					{
 						var md5 = MD5.Create();
 						var totalSize = 0;
 						stopwatch.Start();
-						for (var cnt = 0; cnt <= extractor.FilesCount - 1; cnt++)
+						if (ExtractorCheck(extractor))
 						{
-							var entrySize = Convert.ToInt32(extractor.ArchiveFileData[cnt].Size);
-							var entryName = extractor.ArchiveFileData[cnt].FileName;
-							totalSize += entrySize;
-							if ((entrySize / 1024 <=
-								 _exchangeAttachmentFilterConfig.AttachmentSizeThreshold) &&
-									(totalSize / 1024 <= _exchangeAttachmentFilterConfig.AttachmentUnarchivedSizeThreshold) &&
-									(stopwatch.ElapsedMilliseconds < _exchangeAttachmentFilterConfig.AttachmentArchiveProcessingTime))
+							results.AddRange(ArchiveBytesProcessing(currentDepth, archiveName, possiblePasswordsStringList, archiveBytes, totalSize, md5));
+						}
+						else
+						{
+							LogInfo($"{archiveName} check failed, probably encrypted");
+							try
 							{
-								using (var stream = new MemoryStream())
+
+								if (IsArchiveEncrypted(extractor))
 								{
-									extractor.ExtractFile(cnt, stream);
-									var md5hash = BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", string.Empty);
-
-									if (entryName != null)
+									string[] entrynames = new string[extractor.ArchiveFileNames.Count];
+									try
 									{
-										results.Add(FilenameFilterStatus(entryName));
+										extractor.ArchiveFileNames.CopyTo(entrynames, 0);
 									}
-									else
+									catch (Exception e)
 									{
-										entryName = $"fakefilename {md5hash}";
-										LogInfo($"Archive entry process, cant read filename, md5: {entryName}");
+										LogError($"cant read entrynames in {archiveName}: {e.Message}");
 									}
+									LogInfo($"archive {archiveName} is encrypted, entries: {string.Join(",", entrynames)}");
+									try
+									{ //bruteforce
 
-									results.AddRange(ProcessArchiveEntry(entryName, StreamToByteArray(stream), md5hash, currentDepth + 1));
+
+										var cnt = 0;
+										foreach (var possiblePassword in possiblePasswordsStringList)
+										{
+											try
+											{
+												cnt++;
+												using (var archivestream = new MemoryStream(archiveBytes))
+												using (var extractorpass =
+													new SevenZip.SevenZipExtractor(archivestream, possiblePassword))
+												{
+													if (ExtractorCheck(extractorpass))
+													//if (extractorpass.Check())
+													{
+														
+														LogInfo($"archive {archiveName} password in message body: {possiblePassword}");
+														var plist = new List<string> { possiblePassword };
+														results.AddRange(ArchiveBytesProcessing(currentDepth, archiveName, plist, archiveBytes, totalSize, md5, possiblePassword));
+														break;
+													}
+												}
+
+											}
+											catch (Exception e)
+											{
+												LogError($"cant bruteforce {archiveName}: {e.Message}");
+												if (_exchangeAttachmentFilterConfig.BlockUncheckedArchives)
+													results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing,
+														MessageProcessingResult.CantProcess, $"exception: Cant process archive {archiveName} correctly, check failed"));
+											}
+
+										}
+										LogInfo("");
+									}
+									catch (Exception e)
+									{
+										LogError($"cant bruteforce {archiveName}: {e.Message}");
+										if (_exchangeAttachmentFilterConfig.BlockUncheckedArchives)
+											results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing,
+												MessageProcessingResult.CantProcess, $"exception: Cant process archive {archiveName} correctly, check failed"));
+									}
+								}
+								else
+								{
+									if (_exchangeAttachmentFilterConfig.BlockUncheckedArchives)
+										results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing,
+											MessageProcessingResult.CantProcess, $"exception: Cant process archive {archiveName} correctly, check failed"));
 								}
 
 							}
-							else
+							catch (Exception e)
 							{
-								LogInfo($"Archive or entry too big, processing stopped - {entryName}");
-								results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing, MessageProcessingResult.CantProcess, $"Too big archive/entry {entryName}", archiveName));
-								break;
+								LogError($"{e.Message} {e.StackTrace}");
+								if (_exchangeAttachmentFilterConfig.BlockUncheckedArchives)
+									results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing,
+										MessageProcessingResult.CantProcess, $"exception: Cant process archive {archiveName} correctly: {e.Message}"));
 							}
-
-
-
 						}
-
 					}
 				}
 				catch (Exception e)
 				{
 					LogError($"{e.Message} {e.StackTrace}");
 					if (_exchangeAttachmentFilterConfig.BlockUncheckedArchives)
-						results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing, MessageProcessingResult.CantProcess, $"exception: Cant process archive correctly: {e.Message}"));
+						results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing, MessageProcessingResult.CantProcess,
+							$"exception: Cant process archive {archiveName} correctly: {e.Message}"));
 				}
 			}
 			else
@@ -171,70 +299,70 @@ namespace ExchangeFilter
 				results.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing, MessageProcessingResult.CantProcess, "Depth limit reached"));
 			}
 
-			result = GetWorstStatusFromList(results, AgentModuleName.ArchiveProcessing);
+			//result = GetWorstStatusFromList(results, AgentModuleName.ArchiveProcessing);
 			if (stopwatch.IsRunning)
 				stopwatch.Stop();
-			return result;
+			return results;
 		}
-
 		private string MessageProcessingStatusToString(MessageProcessingStatus status)
 		{
 			return
 				$"{status.AgentModuleName.ToString()}:{status.ObjectName}:{status.Comment}:{status.Result.ToString()}";
 		}
 
-		private MessageProcessingStatus GetWorstStatusFromList(List<MessageProcessingStatus> results, AgentModuleName agentModuleName)
-		{
-			var worstResult = new MessageProcessingStatus(agentModuleName, MessageProcessingResult.NoMatch, "Cant choose worst result, OK");
-			foreach (var result in results)
-			{
-				worstResult = CompareStatusResults(worstResult, result);
-			}
+        private bool IsArchiveEncrypted(SevenZipExtractor extractor)
+        {
+            var encrypted = false;
+            foreach (var afileData in extractor.ArchiveFileData)
+            {
+                if (afileData.Encrypted)
+                {
+                    encrypted = true;
+                    break;
+                }
+            }
 
-			return worstResult;
-		}
-
-
-		public MessageProcessingStatus CompareStatusResults(MessageProcessingStatus result1, MessageProcessingStatus result2)
-		{
-			if (result1.Result == MessageProcessingResult.Whitelisted)
-				return result1;
-			if (result2.Result == MessageProcessingResult.Whitelisted)
-				return result2;
-			if (result1.Result == MessageProcessingResult.Blacklisted)
-				return result1;
-			if (result2.Result == MessageProcessingResult.Blacklisted)
-				return result2;
-			if (result1.Result > result2.Result) return result1;
-			return result2;
-		}
-
-		private List<MessageProcessingStatus> ProcessArchiveEntry(string filename, byte[] entryBytes, string entryHash, int currentDepth)
-		{
-			var resultsList = new List<MessageProcessingStatus>();
-			if (IsArchive(filename, entryBytes) && Convert.ToInt32(_exchangeAttachmentFilterConfig.AttachmentSizeThreshold) >
-				entryBytes.Length / 1024)
-			{
-				resultsList.Add(ProcessArchiveBytes(entryBytes, filename, entryHash, currentDepth));
-
-			}
-
-			if (_exchangeAttachmentFilterConfig.AttachmentSizeThreshold > entryBytes.Length / 1024)
-			{
-				resultsList.AddRange(ProcessFileBytes(entryBytes, filename, entryHash));
-			}
-			else
-			{
-				LogInfo($"Archive processing: entry {filename}, md {entryHash} is too big, {entryBytes.Length} kb, skipping");
-				resultsList.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing, MessageProcessingResult.NoMatch,
-					$"entry {filename}, md {entryHash} is too big, {entryBytes.Length} kb", filename));
-			}
+            if (!encrypted)
+            {
+                foreach (var property in _exchangeAttachmentFilterConfig.ArchiveEncryptedProperties)
+                {
+                    foreach (var archiveProperty in extractor.ArchiveProperties)
+                    {
+                        if (archiveProperty.Name.ToLower() == property.Name)
+                        {
+                            encrypted |= Regex.IsMatch(archiveProperty.Value.ToString(), WildcardToRegex(property.Value), RegexOptions.IgnoreCase);
+                        }
+                        if (encrypted) break;
+                    }
+                    if (encrypted) break;
+                }
+            }
 
 
-			return resultsList;
-		}
+            return encrypted;
+        }
+
+		private List<MessageProcessingStatus> ProcessArchiveEntry(string filename, byte[] entryBytes, string entryHash, int currentDepth, List<string> possiblePasswordsStringList)
+        {
+            var resultsList = new List<MessageProcessingStatus>();
 
 
+            if (_exchangeAttachmentFilterConfig.AttachmentSizeThreshold > entryBytes.Length / 1024 &
+                currentDepth <= _exchangeAttachmentFilterConfig.AttachmentArchiveDepth)
+            {
+                resultsList.AddRange(ProcessFileBytes(entryBytes, filename, entryHash, possiblePasswordsStringList));
+            }
+            else
+            {
+                LogInfo($"Archive processing: entry {filename}, md {entryHash} is too big, {entryBytes.Length} kb, skipping");
+                resultsList.Add(new MessageProcessingStatus(AgentModuleName.ArchiveProcessing, MessageProcessingResult.NoMatch,
+                    $"entry {filename}, md {entryHash} is too big, {entryBytes.Length} kb", filename));
+            }
+
+
+            return resultsList;
+        }
+		
 		public MessageProcessingStatus ProcessMessageSubject(string subject)
 		{
 			var regexWhiteList = _exchangeAttachmentFilterConfig.SubjectWhitelistRgx;
@@ -272,21 +400,21 @@ namespace ExchangeFilter
 			return new MessageProcessingStatus(AgentModuleName.MessageSubjectChecking, MessageProcessingResult.NoMatch);
 		}
 
-		public List<MessageProcessingStatus> ProcessMessageHeaders(HeaderList headerslist)
-		{
-			var resultList = new List<MessageProcessingStatus>();
-			foreach (var filterHeader in _exchangeAttachmentFilterConfig.AgentHeaders.FilterHeadersBlackList)
-			{
-				resultList.Add(SearchSuspHeader(filterHeader, headerslist, MessageProcessingResult.Blacklisted));
-			}
+        public List<MessageProcessingStatus> ProcessMessageHeaders(HeaderList headerslist)
+        {
+            var resultList = new List<MessageProcessingStatus>();
+            foreach (var filterHeader in _exchangeAttachmentFilterConfig.AgentHeaders.FilterHeadersBlackList)
+            {
+                resultList.AddRange(SearchSuspHeader(filterHeader, headerslist, MessageProcessingResult.Blacklisted));
+            }
 
-			foreach (var filterHeader in _exchangeAttachmentFilterConfig.AgentHeaders.FilterHeadersWhiteList)
-			{
-				resultList.Add(SearchSuspHeader(filterHeader, headerslist, MessageProcessingResult.Whitelisted));
-			}
+            foreach (var filterHeader in _exchangeAttachmentFilterConfig.AgentHeaders.FilterHeadersWhiteList)
+            {
+                resultList.AddRange(SearchSuspHeader(filterHeader, headerslist, MessageProcessingResult.Whitelisted));
+            }
 
-			return resultList;
-		}
+            return resultList;
+        }
 
 		public List<MessageProcessingStatus> ProcessMessageId(string messageId)
 		{
@@ -364,39 +492,40 @@ namespace ExchangeFilter
 			return resultList;
 		}
 
-		private MessageProcessingStatus SearchSuspHeader(Header filterHeader, HeaderList headerslist, MessageProcessingResult awaitingResult)
-		{
-			var resultStatus = new MessageProcessingStatus(AgentModuleName.MessageHeadersChecking, MessageProcessingResult.NoMatch);
+        private List<MessageProcessingStatus> SearchSuspHeader(Header filterHeader, HeaderList headerslist, MessageProcessingResult awaitingResult)
+        {
+            var resultList = new List<MessageProcessingStatus>();
 
-			var nameMatches = headerslist.FindAll(filterHeader.Name.ToLower()).ToList();
+            var nameMatches = headerslist.FindAll(filterHeader.Name.ToLower()).ToList();
 
-			if (nameMatches.Count > 0)
-			{
-				foreach (var matchedHeader in nameMatches)
-				{
-					var tmpresult = new MessageProcessingStatus(AgentModuleName.MessageHeadersChecking,
-						MessageProcessingResult.NoMatch)
-					{ ObjectName = matchedHeader.Name };
-					switch (filterHeader.ValueType)
-					{
-						case Header.HeaderValueTypeEnum.Wildcard:
-							tmpresult.Result = filterHeader.ValuesList.Any(x => Regex.IsMatch(matchedHeader.Name, WildcardToRegex(filterHeader.Name), RegexOptions.IgnoreCase) &&
-								Regex.IsMatch(matchedHeader.Value, WildcardToRegex(x), RegexOptions.IgnoreCase)) ? awaitingResult : MessageProcessingResult.NoMatch;
-							break;
-						case Header.HeaderValueTypeEnum.Regex:
-							tmpresult.Result = filterHeader.ValuesList.Any(x => Regex.IsMatch(matchedHeader.Name, WildcardToRegex(filterHeader.Name), RegexOptions.IgnoreCase) &&
-										 Regex.IsMatch(matchedHeader.Value, x, RegexOptions.IgnoreCase)) ? awaitingResult : MessageProcessingResult.NoMatch;
-							break;
-					}
-					//regexWhiteList.Any(x => Regex.IsMatch(subject, x, RegexOptions.IgnoreCase))
-					resultStatus = CompareStatusResults(resultStatus, tmpresult);
+            if (nameMatches.Count > 0)
+            {
+                foreach (var matchedHeader in nameMatches)
+                {
+                    var tmpresult = new MessageProcessingStatus(AgentModuleName.MessageHeadersChecking,
+                            MessageProcessingResult.NoMatch)
+                        { ObjectName = matchedHeader.Name };
+                    switch (filterHeader.ValueType)
+                    {
+                        case Header.HeaderValueTypeEnum.Wildcard:
+                            tmpresult.Result = filterHeader.ValuesList.Any(x => Regex.IsMatch(matchedHeader.Name, WildcardToRegex(filterHeader.Name), RegexOptions.IgnoreCase) &&
+                                Regex.IsMatch(matchedHeader.Value, WildcardToRegex(x), RegexOptions.IgnoreCase)) ? awaitingResult : MessageProcessingResult.NoMatch;
+                            break;
+                        case Header.HeaderValueTypeEnum.Regex:
+                            tmpresult.Result = filterHeader.ValuesList.Any(x => Regex.IsMatch(matchedHeader.Name, WildcardToRegex(filterHeader.Name), RegexOptions.IgnoreCase) &&
+                                Regex.IsMatch(matchedHeader.Value, x, RegexOptions.IgnoreCase)) ? awaitingResult : MessageProcessingResult.NoMatch;
+                            break;
+                    }
+                    //regexWhiteList.Any(x => Regex.IsMatch(subject, x, RegexOptions.IgnoreCase))
+                    resultList.Add(tmpresult);
 
-				}
 
-			}
+                }
 
-			return resultStatus;
-		}
+            }
+
+            return resultList;
+        }
 
 
 		public static string WildcardToRegex(string wildcardString)
@@ -492,6 +621,42 @@ namespace ExchangeFilter
 
 		}
 
+
+        private bool ExtractorCheck(SevenZipExtractor extractor)
+        {
+            var res = true;
+
+            if ((extractor.UnpackedSize / 1024 <=
+                 _exchangeAttachmentFilterConfig.AttachmentSizeThreshold))
+            {
+                try
+                {
+                    if (extractor.ArchiveFileData.FirstOrDefault(x => x.IsDirectory == false).FileName == null)
+                    {
+                        LogInfo("Empty archive");
+                        return true;
+                    }
+                    using (var stream = new MemoryStream())
+                    {
+                        extractor.ExtractFile(extractor.ArchiveFileData.FirstOrDefault(x => x.IsDirectory == false).Index, stream);
+                        if (stream.Length == 0) res = false;
+                    }
+                }
+                catch (Exception e)
+                {
+                    res = false;
+                    LogError($"Cant check extractor: {e.Message}");
+                }
+            }
+            else
+            {
+                res = false;
+                LogError($"Cant check extractor: unpacked size {extractor.UnpackedSize} more than threshold {_exchangeAttachmentFilterConfig.AttachmentSizeThreshold}");
+            }
+
+
+            return res;
+        }
 		private bool GetYaraQSByteArrayBool(byte[] buffer, string rulesPath)
 		{
 			var stopwatch = new Stopwatch();

@@ -38,7 +38,7 @@ namespace ExchangeFilterTests
 		{
 			const string headerName = "X-Malicious-Message";
 			const string headerValue = "YES";
-			const string pathToEml = @"..\..\GoodMail.eml";
+			const string pathToEml = @"..\..\..\GoodMail.eml";
 			var colRecipients = new List<string> { "sample@sampledomaincin.com" };
 			var fromAddress = new RoutingAddress();
 
@@ -51,7 +51,7 @@ namespace ExchangeFilterTests
         {
             string headerName = "X-Malicious-Message";
             string headerValue = "YES";
-            string pathToEml = @"..\..\expl_vcf.eml";
+            string pathToEml = @"..\..\..\expl_vcf.eml";
             List<string> colRecipients = new List<string> { "sample@sampledomaincin.com" };
             RoutingAddress fromAddress = new RoutingAddress();
 
@@ -64,7 +64,7 @@ namespace ExchangeFilterTests
         {
             string headerName = "X-Malicious-Message";
             string headerValue = "YES";
-            string pathToEml = @"..\..\PdfWithOpenAction.eml";
+            string pathToEml = @"..\..\..\PdfWithOpenAction.eml";
             List<string> colRecipients = new List<string> { "sample@sampledomaincin.com" };
             RoutingAddress fromAddress = new RoutingAddress();
 
@@ -77,7 +77,7 @@ namespace ExchangeFilterTests
         {
             string headerName = "X-Malicious-Message";
             string headerValue = "YES";
-            string pathToEml = @"..\..\WithBadLinkInHtml.eml";
+            string pathToEml = @"..\..\..\WithBadLinkInHtml.eml";
 
             List<string> colRecipients = new List<string> { "sample@sampledomaincin.com" };
             RoutingAddress fromAddress = new RoutingAddress();
@@ -92,7 +92,7 @@ namespace ExchangeFilterTests
         {
             string headerName = "X-Malicious-Message";
             string headerValue = "YES";
-            string pathToEml = @"..\..\PhishingMessageWithFakeMessageId.eml";
+            string pathToEml = @"..\..\..\PhishingMessageWithFakeMessageId.eml";
             List<string> colRecipients = new List<string> { "sample@sampledomaincin.com" };
             RoutingAddress fromAddress = new RoutingAddress();
 
@@ -108,7 +108,7 @@ namespace ExchangeFilterTests
         {
             string headerName = "X-Malicious-Message";
             string headerValue = "YES";
-            string pathToEml = @"..\..\htmlwithtags.eml";
+            string pathToEml = @"..\..\..\htmlwithtags.eml";
             List<string> colRecipients = new List<string> { "sample@sampledomaincin.com" };
             RoutingAddress fromAddress = new RoutingAddress();
 
@@ -123,7 +123,7 @@ namespace ExchangeFilterTests
         {
             string headerName = "X-Malicious-Message";
             string headerValue = "YES";
-            string pathToEml = @"..\..\BlackListedSubject.eml";
+            string pathToEml = @"..\..\..\BlackListedSubject.eml";
             List<string> colRecipients = new List<string> { "sample@sampledomaincin.com" };
             RoutingAddress fromAddress = new RoutingAddress();
 
