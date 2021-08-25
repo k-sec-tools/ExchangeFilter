@@ -36,9 +36,9 @@ Linyaranet requires .Net version 4.6 and higher. You can check if your server su
 * Start-Service msexchangetransport
 
 ## Configuration
-Config.cs - Class contains necessary configurations, without which agents work is impossible.
-default_config.xml - once configured, will be backup fuse, and if you change config.xml with mistake, agent will use default configuration
-config.xml - main configuration file.
+* Config.cs - Class contains necessary configurations, without which agents work is impossible.
+* default_config.xml - once configured, will be backup fuse, and if you change config.xml with mistake, agent will use default configuration
+* config.xml - main configuration file.
 
 ## Logging
 Information about messages processing is stored as JSON on filesystem via log4net.Ext.Json. Its useful to process these logs via ELK stack.
